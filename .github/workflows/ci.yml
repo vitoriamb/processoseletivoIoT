@@ -30,7 +30,10 @@ jobs:
       - name: Simulacao Wokwi (boot do firmware)
         uses: wokwi/wokwi-ci-action@v1
         with:
-          token: ${{ secrets.WOKWI_API_KEY }}
+          # Aceita os dois nomes de secret: WOKWI_API_KEY e' o documentado
+          # no enunciado do recrutador, WOKWI_CLI_TOKEN e' o nome usado
+          # no template original e na documentacao oficial da action.
+          token: ${{ secrets.WOKWI_API_KEY || secrets.WOKWI_CLI_TOKEN }}
           path: /
           timeout: 30000
           expect_text: 'Cofre iniciado'
