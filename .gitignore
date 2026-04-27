@@ -1,1 +1,24 @@
+# Segredos
 .env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.python-version
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Artefatos de build (gerados pelo Docker no CI)
+fs.bin
