@@ -7,6 +7,68 @@
 
 ---
 
+## 🚀 Como Executar Localmente
+
+**Pré-requisitos:**
+
+- Docker
+- VSCode com a extensão [Wokwi for VSCode](https://marketplace.visualstudio.com/items?itemName=wokwi.wokwi-vscode)
+- Token Wokwi gratuito de https://wokwi.com/dashboard/ci
+
+### 1. Gerar o `fs.bin`
+
+O firmware vive em uma partição LittleFS no offset `0x200000` da flash, gerada pelo Docker a partir do diretório `src/`. O primeiro build é demorado (~6 min) porque baixa a imagem `espressif/idf:v5.2.2`; reexecuções são em segundos graças ao cache de camadas.
+
+```bash
+docker build -t esp32-builder -f Dockerfile .
+docker run --name esp32-fs-builder esp32-builder /bin/bash
+docker cp esp32-fs-builder:/fs.bin .
+docker rm esp32-fs-builder
+```
+
+Resultado: `fs.bin` (2 MB) na raiz do repositório. Já está listado no `.gitignore`.
+
+### 2. Iniciar a simulação no VSCode
+
+1. Abra `diagram.json` (ou `wokwi.toml`)
+2. Command Palette (Ctrl+Shift+P) → **`Wokwi: Start Simulation`**
+3. Na primeira vez, cole o token Wokwi quando solicitado
+
+### 3. Roteiro de teste
+
+| Passo | Esperado |
+| --- | --- |
+| Boot | Serial: `Cofre iniciado`. LCD: `Cofre Trancado / Digite a senha:`. LED vermelho aceso. |
+| Clicar `1` `2` `3` `4` no keypad | LCD: `Senha: / ****`, sem abrir ainda |
+| Clicar `#` | Beep agudo, LED verde, LCD `Cofre Aberto / Bem-vindo!`, servo gira para 90° |
+| Aguardar 5 s | Religa sozinho, volta ao estado inicial |
+| `9` `9` `9` `9` `#` | Beep grave, LCD `Senha Incorreta / Tentativa 1/3` por 1 s |
+| Errar 3× seguidas | LCD `BLOQUEADO! / Aguarde 10s`, LED vermelho piscando + buzzer intermitente |
+| `*` durante digitação | Cancela e zera o buffer a qualquer momento |
+
+### 4. Loop de desenvolvimento
+
+Quando alterar qualquer arquivo em `src/`, regere o `fs.bin` e reinicie a simulação:
+
+```bash
+docker build -t esp32-builder -f Dockerfile . \
+  && docker rm -f esp32-fs-builder 2>/dev/null; \
+  docker run --name esp32-fs-builder esp32-builder /bin/bash \
+  && docker cp esp32-fs-builder:/fs.bin . \
+  && docker rm esp32-fs-builder
+```
+
+### Troubleshooting
+
+| Sintoma | Causa provável |
+| --- | --- |
+| Serial mostra `>>>` (REPL) em vez de `Cofre iniciado` | `fs.bin` ausente ou desatualizado — regere |
+| `ImportError: no module named 'keypad'` | `Dockerfile` não copiou `src/` inteiro — confira o `cp -r /src/. ~/fs/` |
+| LCD com texto embaralhado | Endereço I2C errado — confirme `0x27` em [`src/ui.py`](src/ui.py) |
+| Tecla não responde | Pinout do keypad em [`diagram.json`](diagram.json) não bate com `KEYPAD_LINHAS`/`KEYPAD_COLUNAS` em [`src/main.py`](src/main.py) |
+
+---
+
 ## 1️⃣ Visão Geral da Solução
 
 **Projeto:** Cofre Eletrônico em ESP32 + MicroPython, simulado no Wokwi.
