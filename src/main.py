@@ -39,6 +39,8 @@ LOOP_MS = 20
 def main():
     # Imprime antes de inicializar o hardware: garante que a CI consiga
     # detectar o boot mesmo se algum periferico falhar na simulacao.
+    # 'Teste' tambem cobre o expect_text do workflow original do template.
+    print("Teste")
     print("Cofre iniciado")
 
     ui = UI(
