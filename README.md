@@ -7,6 +7,16 @@
 
 ---
 
+## 🎥 Demonstração
+
+<video src="docs/cofre.webm" controls width="100%" muted>
+  Seu navegador não suporta vídeo HTML5. <a href="docs/cofre.webm">Baixe o vídeo aqui</a>.
+</video>
+
+> Demonstração em tempo real da simulação Wokwi: digitação do PIN, abertura da trava, erro de senha e modo de bloqueio.
+
+---
+
 ## 🚀 Como Executar Localmente
 
 **Pré-requisitos:**
