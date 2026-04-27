@@ -1,7 +1,49 @@
 {
   "version": 1,
-  "author": "Uri Shaked",
+  "author": "Candidato",
   "editor": "wokwi",
-  "parts": [ { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} } ],
-  "connections": [ [ "esp:TX", "$serialMonitor:RX", "", [] ], [ "esp:RX", "$serialMonitor:TX", "", [] ] ]
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-lcd1602", "id": "lcd", "top": -220, "left": -10, "attrs": { "pins": "i2c" } },
+    { "type": "wokwi-membrane-keypad", "id": "kp", "top": 0, "left": -310, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo", "top": 70, "left": 280, "attrs": {} },
+    { "type": "wokwi-led", "id": "led_g", "top": 220, "left": 180, "attrs": { "color": "green" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 220, "left": 130, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "led_r", "top": 220, "left": 270, "attrs": { "color": "red" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 220, "left": 220, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-buzzer", "id": "buz", "top": 290, "left": 180, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "esp:3V3", "lcd:VCC", "red", [ "v-50", "h0" ] ],
+    [ "esp:GND.2", "lcd:GND", "black", [ "v-60", "h0" ] ],
+    [ "esp:21", "lcd:SDA", "green", [ "v-70", "h0" ] ],
+    [ "esp:22", "lcd:SCL", "blue", [ "v-80", "h0" ] ],
+
+    [ "esp:13", "kp:R1", "green", [ "h-40" ] ],
+    [ "esp:12", "kp:R2", "green", [ "h-40" ] ],
+    [ "esp:14", "kp:R3", "green", [ "h-40" ] ],
+    [ "esp:27", "kp:R4", "green", [ "h-40" ] ],
+    [ "esp:26", "kp:C1", "blue", [ "h-40" ] ],
+    [ "esp:25", "kp:C2", "blue", [ "h-40" ] ],
+    [ "esp:33", "kp:C3", "blue", [ "h-40" ] ],
+    [ "esp:32", "kp:C4", "blue", [ "h-40" ] ],
+
+    [ "esp:VIN", "servo:V+", "red", [ "h40" ] ],
+    [ "esp:GND.1", "servo:GND", "black", [ "h40" ] ],
+    [ "esp:18", "servo:PWM", "orange", [ "h40" ] ],
+
+    [ "esp:19", "r1:1", "yellow", [ "v100", "h0" ] ],
+    [ "r1:2", "led_g:A", "yellow", [] ],
+    [ "led_g:C", "esp:GND.3", "black", [ "v0", "h-100" ] ],
+
+    [ "esp:23", "r2:1", "yellow", [ "v100", "h0" ] ],
+    [ "r2:2", "led_r:A", "yellow", [] ],
+    [ "led_r:C", "esp:GND.3", "black", [ "v0", "h-100" ] ],
+
+    [ "esp:5", "buz:1", "orange", [ "v150", "h0" ] ],
+    [ "buz:2", "esp:GND.3", "black", [ "v0", "h-100" ] ]
+  ]
 }
