@@ -1,34 +1,73 @@
-name: ESP32 Filesystem Build
+name: CI/CD - Cofre ESP32
 
 on:
   push:
-    branches:
-      - main
-      - feat/actions-build
+    branches: [develop, main]
   pull_request:
-    branches:
-      - main
+    branches: [develop, main]
+
+# Garante que pushes consecutivos no mesmo branch nao fiquem em fila.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build_filesystem:
+  build_and_test:
+    name: Build firmware e simulacao Wokwi
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
 
-    - name: Build Docker image
-      run: docker build -t esp32-builder -f Dockerfile .
+      - name: Build da imagem Docker (ESP-IDF + mklittlefs)
+        run: docker build -t esp32-builder -f Dockerfile .
 
-    - name: Run container and generate fs.bin
-      run: |
-        docker run --name esp32-fs-builder esp32-builder /bin/bash
-        
-        docker cp esp32-fs-builder:/fs.bin .
+      - name: Gerar fs.bin a partir de src/
+        run: |
+          docker run --name esp32-fs-builder esp32-builder /bin/bash
+          docker cp esp32-fs-builder:/fs.bin .
 
-    - name: Test with Wokwi
-      uses: wokwi/wokwi-ci-action@v1
-      with:
-        token: ${{ secrets.WOKWI_CLI_TOKEN }}
-        path: /
-        expect_text: 'Teste'
+      - name: Simulacao Wokwi (boot do firmware)
+        uses: wokwi/wokwi-ci-action@v1
+        with:
+          token: ${{ secrets.WOKWI_API_KEY }}
+          path: /
+          timeout: 30000
+          expect_text: 'Cofre iniciado'
+
+      - name: Upload do fs.bin como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fs-bin-${{ github.sha }}
+          path: fs.bin
+          retention-days: 7
+
+  release:
+    name: Release em main
+    needs: build_and_test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Baixar fs.bin do job anterior
+        uses: actions/download-artifact@v4
+        with:
+          name: fs-bin-${{ github.sha }}
+
+      - name: Calcular tag de release
+        id: version
+        run: echo "tag=v$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar release com fs.bin
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Cofre ESP32 ${{ steps.version.outputs.tag }}
+          files: fs.bin
+          generate_release_notes: true
